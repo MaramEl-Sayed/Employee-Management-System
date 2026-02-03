@@ -1,16 +1,17 @@
 from django.contrib import admin
-from django.urls import path
-from rest_framework.routers import DefaultRouter
-from companies.views import CompanyViewSet
-from departments.views import DepartmentViewSet
+from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
-router = DefaultRouter()
-router.register('companies', CompanyViewSet)
-router.register('departments', DepartmentViewSet)
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/schema/', SpectacularAPIView.as_view()),
-    path('api/docs/', SpectacularSwaggerView.as_view()),
+
+    # API schema & docs
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema')),
+
+    # App URLs
+    path('api/', include('accounts.urls')),
+    path('api/companies/', include('companies.urls')),
+    path('api/departments/', include('departments.urls')),
+    path('api/employees/', include('employees.urls')),
 ]
-urlpatterns += router.urls
