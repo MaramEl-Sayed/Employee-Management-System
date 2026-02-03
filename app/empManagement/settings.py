@@ -25,6 +25,10 @@ INSTALLED_APPS = [
     'drf_spectacular',
     # Apps
     'accounts.apps.AccountsConfig',
+    'companies.apps.CompaniesConfig',
+    'departments.apps.DepartmentsConfig',
+    'employees.apps.EmployeesConfig'
+
 ]
 
 MIDDLEWARE = [
@@ -95,10 +99,20 @@ REST_FRAMEWORK = {
 'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
-
 SIMPLE_JWT = {
 'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+'REFRESH_TOKEN_LIFETIME': timedelta(days=5),
+}
+# Pagination
+REST_FRAMEWORK.update({
+'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+'PAGE_SIZE': 10,
+})
+# API Documentation
+SPECTACULAR_SETTINGS = {
+'TITLE': 'Employee Management System API',
+'DESCRIPTION': 'Backend APIs for EMS',
+'VERSION': '1.0.0',
 }
 
 LANGUAGE_CODE = 'en-us'
