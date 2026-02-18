@@ -2,10 +2,17 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateEmployeeStatus } from "../../../api/employees.api";
 
 const transitions = {
-  APPLICATION: ["INTERVIEW", "REJECTED"],
-  INTERVIEW: ["HIRED", "REJECTED"],
+  APPLICATION_RECEIVED: ["INTERVIEW_SCHEDULED", "NOT_ACCEPTED"],
+  INTERVIEW_SCHEDULED: ["HIRED", "NOT_ACCEPTED"],
   HIRED: [],
-  REJECTED: [],
+  NOT_ACCEPTED: [],
+};
+
+const statusLabels = {
+  APPLICATION_RECEIVED: "Schedule Interview",
+  INTERVIEW_SCHEDULED: "Hire",
+  HIRED: "Hired",
+  NOT_ACCEPTED: "Not Accepted",
 };
 
 const EmployeeActions = ({ employee }) => {
@@ -18,17 +25,27 @@ const EmployeeActions = ({ employee }) => {
     },
   });
 
+  const allowedTransitions = transitions[employee.status] || [];
+
+  if (allowedTransitions.length === 0) {
+    return <span className="text-gray-500 text-sm">No actions available</span>;
+  }
+
   return (
-    <div className="flex gap-2">
-      {transitions[employee.status].map(next => (
+    <div className="flex gap-2 flex-wrap">
+      {allowedTransitions.map(nextStatus => (
         <button
-          key={next}
-          onClick={() =>
-            mutation.mutate({ id: employee.id, status: next })
-          }
-          className="px-2 py-1 text-sm bg-blue-600 text-white rounded"
+          key={nextStatus}
+          onClick={() => {
+            const updateData = { id: employee.id, status: nextStatus };
+            if (nextStatus === "HIRED" && !employee.hired_on) {
+              updateData.hired_on = new Date().toISOString().split('T')[0];
+            }
+            mutation.mutate(updateData);
+          }}
+          className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
         >
-          {next}
+          {statusLabels[nextStatus] || nextStatus.replace('_', ' ')}
         </button>
       ))}
     </div>

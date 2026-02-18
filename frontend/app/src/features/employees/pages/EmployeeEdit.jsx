@@ -1,16 +1,21 @@
 import { useForm } from "react-hook-form";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { getEmployee, updateEmployee } from "../../../api/employees.api";
 import { getCompanies } from "../../../api/companies.api";
 import { getDepartmentsByCompany } from "../../../api/departments.api";
-import { createEmployee } from "../../../api/employees.api";
 import { useState, useEffect } from "react";
 
-const EmployeeCreate = () => {
+const EmployeeEdit = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm();
   const [companyId, setCompanyId] = useState(null);
+
+  const { data: employee, isLoading } = useQuery({
+    queryKey: ["employee", id],
+    queryFn: () => getEmployee(id),
+  });
 
   const { data: companies } = useQuery({
     queryKey: ["companies"],
@@ -23,6 +28,25 @@ const EmployeeCreate = () => {
     enabled: !!companyId,
   });
 
+  const { register, handleSubmit, formState: { errors }, watch, setValue, reset } = useForm();
+
+  useEffect(() => {
+    if (employee) {
+      reset({
+        name: employee.name,
+        email: employee.email,
+        mobile: employee.mobile,
+        address: employee.address,
+        designation: employee.designation,
+        company: employee.company,
+        department: employee.department,
+        status: employee.status,
+        hired_on: employee.hired_on || "",
+      });
+      setCompanyId(employee.company);
+    }
+  }, [employee, reset, setValue]);
+
   const watchedCompany = watch("company");
   useEffect(() => {
     if (watchedCompany && watchedCompany !== companyId) {
@@ -31,25 +55,24 @@ const EmployeeCreate = () => {
     }
   }, [watchedCompany, companyId, setValue]);
 
-  const createMutation = useMutation({
-    mutationFn: createEmployee,
-    onSuccess: (data) => {
+  const updateMutation = useMutation({
+    mutationFn: (data) => updateEmployee(id, data),
+    onSuccess: () => {
       queryClient.invalidateQueries(["employees"]);
-      navigate(`/employees/${data.id}`);
+      queryClient.invalidateQueries(["employee", id]);
+      navigate(`/employees/${id}`);
     },
   });
 
   const onSubmit = async (data) => {
     try {
-      await createMutation.mutateAsync(data);
+      await updateMutation.mutateAsync(data);
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.error || 
-                          Object.values(error.response?.data || {}).flat().join(", ") ||
-                          "Failed to create employee";
-      alert(errorMessage);
+      alert(error.response?.data?.message || "Failed to update employee");
     }
   };
+
+  if (isLoading) return <p className="p-6">Loading...</p>;
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const mobileRegex = /^\+?\d{9,15}$/;
@@ -57,9 +80,9 @@ const EmployeeCreate = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Create Employee</h1>
+        <h1 className="text-2xl font-bold">Edit Employee</h1>
         <button
-          onClick={() => navigate("/employees")}
+          onClick={() => navigate(`/employees/${id}`)}
           className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
         >
           Cancel
@@ -72,7 +95,6 @@ const EmployeeCreate = () => {
           <input
             {...register("name", { required: "Name is required" })}
             className="w-full border p-2 rounded"
-            placeholder="Employee Name"
           />
           {errors.name && <p className="text-red-500 text-sm">{errors.name.message}</p>}
         </div>
@@ -86,7 +108,6 @@ const EmployeeCreate = () => {
               pattern: { value: emailRegex, message: "Invalid email format" }
             })}
             className="w-full border p-2 rounded"
-            placeholder="email@example.com"
           />
           {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
         </div>
@@ -96,10 +117,9 @@ const EmployeeCreate = () => {
           <input
             {...register("mobile", {
               required: "Mobile number is required",
-              pattern: { value: mobileRegex, message: "Invalid mobile number format (9-15 digits)" }
+              pattern: { value: mobileRegex, message: "Invalid mobile number format" }
             })}
             className="w-full border p-2 rounded"
-            placeholder="+1234567890"
           />
           {errors.mobile && <p className="text-red-500 text-sm">{errors.mobile.message}</p>}
         </div>
@@ -110,7 +130,6 @@ const EmployeeCreate = () => {
             {...register("address", { required: "Address is required" })}
             className="w-full border p-2 rounded"
             rows="3"
-            placeholder="Employee Address"
           />
           {errors.address && <p className="text-red-500 text-sm">{errors.address.message}</p>}
         </div>
@@ -120,7 +139,6 @@ const EmployeeCreate = () => {
           <input
             {...register("designation", { required: "Designation is required" })}
             className="w-full border p-2 rounded"
-            placeholder="Position/Title"
           />
           {errors.designation && <p className="text-red-500 text-sm">{errors.designation.message}</p>}
         </div>
@@ -147,7 +165,7 @@ const EmployeeCreate = () => {
             className="w-full border p-2 rounded"
             disabled={!companyId}
           >
-            <option value="">{companyId ? "Select Department" : "Select Company first"}</option>
+            <option value="">Select Department</option>
             {departments?.map(d => (
               <option key={d.id} value={d.id}>{d.name}</option>
             ))}
@@ -160,7 +178,6 @@ const EmployeeCreate = () => {
           <select
             {...register("status", { required: "Status is required" })}
             className="w-full border p-2 rounded"
-            defaultValue="APPLICATION_RECEIVED"
           >
             <option value="APPLICATION_RECEIVED">Application Received</option>
             <option value="INTERVIEW_SCHEDULED">Interview Scheduled</option>
@@ -177,20 +194,19 @@ const EmployeeCreate = () => {
             {...register("hired_on")}
             className="w-full border p-2 rounded"
           />
-          <p className="text-xs text-gray-500 mt-1">Required if status is "Hired"</p>
         </div>
 
         <div className="flex gap-2 pt-4">
           <button
             type="submit"
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            disabled={createMutation.isPending}
+            disabled={updateMutation.isPending}
           >
-            {createMutation.isPending ? "Creating..." : "Create Employee"}
+            {updateMutation.isPending ? "Updating..." : "Update Employee"}
           </button>
           <button
             type="button"
-            onClick={() => navigate("/employees")}
+            onClick={() => navigate(`/employees/${id}`)}
             className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
           >
             Cancel
@@ -201,4 +217,4 @@ const EmployeeCreate = () => {
   );
 };
 
-export default EmployeeCreate;
+export default EmployeeEdit;

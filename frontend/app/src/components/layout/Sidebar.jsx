@@ -8,6 +8,8 @@ const Sidebar = () => {
         <NavLink to="/companies" className="block hover:text-blue-400">Companies</NavLink>
         <NavLink to="/departments" className="block hover:text-blue-400">Departments</NavLink>
         <NavLink to="/employees" className="block hover:text-blue-400">Employees</NavLink>
+        <NavLink to="/employees/report" className="block hover:text-blue-400">Employee Report</NavLink>
+        <NavLink to="/account" className="block hover:text-blue-400">My Account</NavLink>
       </nav>
     </div>
   );

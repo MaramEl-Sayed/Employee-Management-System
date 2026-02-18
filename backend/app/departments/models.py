@@ -9,8 +9,8 @@ class Department(models.Model):
     name = models.CharField(max_length=100)
     employees_count = models.PositiveIntegerField(default=0)
 
+    class Meta:
+        unique_together = ('company', 'name')
 
-class Meta:
-    unique_together = ('company', 'name')
     def __str__(self):
         return f"{self.name} ({self.company.name})"

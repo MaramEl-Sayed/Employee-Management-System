@@ -1,16 +1,17 @@
 from pathlib import Path
 from datetime import timedelta
+from decouple import config, Csv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-6jzi)7-*c4fh3rb0h@jmp6z+h(4u2v@ajbw3w=47a)v0nd2l3h'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-6jzi)7-*c4fh3rb0h@jmp6z+h(4u2v@ajbw3w=47a)v0nd2l3h')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
 # Application definition
 
@@ -43,10 +44,11 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
+CORS_ALLOWED_ORIGINS = config(
+    'CORS_ALLOWED_ORIGINS',
+    default='http://localhost:3000,http://127.0.0.1:3000',
+    cast=Csv()
+)
 ROOT_URLCONF = 'empManagement.urls'
 
 TEMPLATES = [
@@ -106,13 +108,13 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-'REFRESH_TOKEN_LIFETIME': timedelta(days=5),
+'ACCESS_TOKEN_LIFETIME': timedelta(minutes=config('JWT_ACCESS_TOKEN_LIFETIME_MINUTES', default=60, cast=int)),
+'REFRESH_TOKEN_LIFETIME': timedelta(days=config('JWT_REFRESH_TOKEN_LIFETIME_DAYS', default=5, cast=int)),
 }
 # Pagination
 REST_FRAMEWORK.update({
 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-'PAGE_SIZE': 10,
+'PAGE_SIZE': config('PAGE_SIZE', default=10, cast=int),
 })
 # API Documentation
 SPECTACULAR_SETTINGS = {

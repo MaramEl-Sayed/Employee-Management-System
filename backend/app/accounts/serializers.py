@@ -19,3 +19,16 @@ class RegisterSerializer(serializers.ModelSerializer):
             role=validated_data['role']
         )
         return user
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'username', 'role']
+        read_only_fields = ['id', 'role']
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['email', 'username']
